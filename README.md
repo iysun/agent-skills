@@ -13,39 +13,39 @@ agent-skills/
     └── examples.md       # 可选：示例
 ```
 
-## 安装
+## 安装（推荐：链接脚本）
 
-将本仓库中某个 skill **目录** 复制或符号链接到对应工具的技能路径。
+在仓库根目录执行，将**全部** skill 以**目录符号链接**安装到 Cursor、Codex：
+
+```powershell
+cd D:\projects\agent-skills
+.\scripts\link-skills.ps1 -Force
+```
+
+常用参数：
+
+```powershell
+# 仅链接到 Cursor，且只处理指定 skill
+.\scripts\link-skills.ps1 -Agents cursor -Skills git-repo-contribute-guide -Force
+
+# 预览，不实际写入
+.\scripts\link-skills.ps1 -WhatIf
+
+# 包含 Claude Code（若已配置 ~/.claude/skills）
+.\scripts\link-skills.ps1 -Agents cursor,codex,claude -Force
+```
 
 | 环境 | 个人技能目录（Windows） |
 |------|-------------------------|
 | **Cursor** | `%USERPROFILE%\.cursor\skills\` |
 | **Codex** | `%USERPROFILE%\.codex\skills\` |
-| **Claude Code** | 见官方文档中的 skills 配置路径 |
+| **Claude Code** | `%USERPROFILE%\.claude\skills\` |
 
-**符号链接示例（以 `git-repo-contribute-guide` 为例）：**
+脚本会扫描仓库内带 `SKILL.md` 的子目录并创建链接；目标若为普通副本目录，需加 `-Force` 才会删除后改为链接。
 
-```powershell
-$repo = "D:\projects\agent-skills\git-repo-contribute-guide"
+> Windows 创建符号链接需开启**开发人员模式**，或以管理员运行 PowerShell。详见 [scripts/link-skills.zh-CN.md](./scripts/link-skills.zh-CN.md)。
 
-# Cursor
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\skills" | Out-Null
-cmd /c mklink /D "$env:USERPROFILE\.cursor\skills\git-repo-contribute-guide" $repo
-
-# Codex
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.codex\skills" | Out-Null
-cmd /c mklink /D "$env:USERPROFILE\.codex\skills\git-repo-contribute-guide" $repo
-```
-
-**复制安装（通用）：**
-
-```powershell
-$repo = "D:\projects\agent-skills\git-repo-contribute-guide"
-Copy-Item -Recurse -Force $repo "$env:USERPROFILE\.cursor\skills\"
-Copy-Item -Recurse -Force $repo "$env:USERPROFILE\.codex\skills\"
-```
-
-安装后按各工具要求重载窗口或重启 CLI；调用时使用 skill 的 `name` 字段（见各 `SKILL.md` frontmatter）。
+安装后重载 Cursor / 重启 Codex CLI；调用时使用各 `SKILL.md` 中的 `name` 字段。
 
 ## Skills 列表
 

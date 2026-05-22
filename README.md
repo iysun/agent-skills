@@ -15,35 +15,31 @@ agent-skills/
 
 ## 安装（推荐：链接脚本）
 
-在仓库根目录执行，将**全部** skill 以**目录符号链接**安装到 Cursor、Codex：
+使用 **Node.js 18+** 跨平台脚本，将 skill 以**目录符号链接**安装到各 Agent（macOS / Linux / Windows）：
 
-```powershell
-cd D:\projects\agent-skills
-.\scripts\link-skills.ps1 -Force
+```bash
+cd /path/to/agent-skills
+node scripts/link-skills.mjs --force
+
+# 或使用 npm script
+npm run link:force
 ```
 
 常用参数：
 
-```powershell
-# 仅链接到 Cursor，且只处理指定 skill
-.\scripts\link-skills.ps1 -Agents cursor -Skills git-repo-contribute-guide -Force
-
-# 预览，不实际写入
-.\scripts\link-skills.ps1 -WhatIf
-
-# 包含 Claude Code（若已配置 ~/.claude/skills）
-.\scripts\link-skills.ps1 -Agents cursor,codex,claude -Force
+```bash
+node scripts/link-skills.mjs --agents cursor --skills git-repo-contribute-guide --force
+node scripts/link-skills.mjs --dry-run
+node scripts/link-skills.mjs --agents cursor,codex,claude --force
 ```
 
-| 环境 | 个人技能目录（Windows） |
-|------|-------------------------|
-| **Cursor** | `%USERPROFILE%\.cursor\skills\` |
-| **Codex** | `%USERPROFILE%\.codex\skills\` |
-| **Claude Code** | `%USERPROFILE%\.claude\skills\` |
+| 环境 | 个人技能目录 |
+|------|----------------|
+| **Cursor** | `~/.cursor/skills/` |
+| **Codex** | `~/.codex/skills/` |
+| **Claude Code** | `~/.claude/skills/` |
 
-脚本会扫描仓库内带 `SKILL.md` 的子目录并创建链接；目标若为普通副本目录，需加 `-Force` 才会删除后改为链接。
-
-> Windows 创建符号链接需开启**开发人员模式**，或以管理员运行 PowerShell。详见 [scripts/link-skills.zh-CN.md](./scripts/link-skills.zh-CN.md)。
+脚本会扫描仓库内带 `SKILL.md` 的子目录；目标若为普通副本目录，需加 `--force` 才会删除后改为链接。详见 [scripts/link-skills.zh-CN.md](./scripts/link-skills.zh-CN.md)。
 
 安装后重载 Cursor / 重启 Codex CLI；调用时使用各 `SKILL.md` 中的 `name` 字段。
 

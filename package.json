@@ -1,0 +1,13 @@
+{
+  "name": "agent-skills",
+  "private": true,
+  "description": "Personal AI agent skills collection",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "link": "node scripts/link-skills.mjs",
+    "link:force": "node scripts/link-skills.mjs --force"
+  }
+}

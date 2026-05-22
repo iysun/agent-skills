@@ -1,37 +1,51 @@
-# Cursor Skills
+# Agent Skills
 
-个人维护的 [Cursor Agent Skills](https://cursor.com/docs/agent/skills) 集合，每个子目录为一个独立 skill。
+个人维护的 **AI Agent Skills** 集合。每个子目录是一个独立 skill（`SKILL.md` + 可选参考文档），可在多种支持 Skill 规范的环境中使用，例如 **Cursor**、**Codex**、**Claude Code** 等。
 
 ## 目录结构
 
 ```
-cursor-skills/
+agent-skills/
 ├── README.md
 └── <skill-name>/
-    ├── SKILL.md          # 必需：技能主文件
+    ├── SKILL.md          # 必需：技能主文件（含 YAML frontmatter）
     ├── reference.md      # 可选：参考文档
     └── examples.md       # 可选：示例
 ```
 
-## 安装到 Cursor
+## 安装
 
-将某个 skill 链接或复制到 Cursor 个人技能目录：
+将本仓库中某个 skill **目录** 复制或符号链接到对应工具的技能路径。
 
-**Windows（PowerShell，以管理员或开发者模式创建符号链接）：**
+| 环境 | 个人技能目录（Windows） |
+|------|-------------------------|
+| **Cursor** | `%USERPROFILE%\.cursor\skills\` |
+| **Codex** | `%USERPROFILE%\.codex\skills\` |
+| **Claude Code** | 见官方文档中的 skills 配置路径 |
+
+**符号链接示例（以 `git-repo-contribute-guide` 为例）：**
 
 ```powershell
-# 安装单个 skill（示例）
+$repo = "D:\projects\agent-skills\git-repo-contribute-guide"
+
+# Cursor
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\skills" | Out-Null
-cmd /c mklink /D "$env:USERPROFILE\.cursor\skills\git-repo-contribute-guide" "D:\projects\cursor-skills\git-repo-contribute-guide"
+cmd /c mklink /D "$env:USERPROFILE\.cursor\skills\git-repo-contribute-guide" $repo
+
+# Codex
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.codex\skills" | Out-Null
+cmd /c mklink /D "$env:USERPROFILE\.codex\skills\git-repo-contribute-guide" $repo
 ```
 
-或直接复制：
+**复制安装（通用）：**
 
 ```powershell
-Copy-Item -Recurse -Force "D:\projects\cursor-skills\git-repo-contribute-guide" "$env:USERPROFILE\.cursor\skills\"
+$repo = "D:\projects\agent-skills\git-repo-contribute-guide"
+Copy-Item -Recurse -Force $repo "$env:USERPROFILE\.cursor\skills\"
+Copy-Item -Recurse -Force $repo "$env:USERPROFILE\.codex\skills\"
 ```
 
-安装后重载 Cursor 窗口，或在对话中通过 skill 名称调用。
+安装后按各工具要求重载窗口或重启 CLI；调用时使用 skill 的 `name` 字段（见各 `SKILL.md` frontmatter）。
 
 ## Skills 列表
 
@@ -41,6 +55,8 @@ Copy-Item -Recurse -Force "D:\projects\cursor-skills\git-repo-contribute-guide" 
 
 ## 新增 Skill
 
-1. 在本仓库根目录下新建 `<skill-name>/SKILL.md`（参考 [create-skill](https://cursor.com/docs/agent/skills) 规范）
+1. 在本仓库新建 `<skill-name>/SKILL.md`（`name` + `description` frontmatter，正文写清工作流程）
 2. 更新本 README 的 Skills 列表
-3. 提交并推送到远程（如有）
+3. `git commit` 并推送（如有远程）
+
+各工具的 Skill 格式细节可能略有差异，以目标环境文档为准；本仓库以通用的 `SKILL.md` 目录结构为准。

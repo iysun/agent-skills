@@ -407,7 +407,7 @@
 <div class="bar">
   <span class="title">{{DECK_TITLE}}</span>
   <div class="right">
-    <span>← → 翻页 · <kbd>F</kbd> 全屏 · <kbd>O</kbd> 总览 · <kbd>S</kbd> 备注</span>
+    <span><kbd>A</kbd><kbd>D</kbd> 翻页 · <kbd>F</kbd> 全屏 · <kbd>V</kbd> 总览 · <kbd>S</kbd> 备注</span>
     <span class="counter"><span id="cur">1</span> / <span id="total">1</span></span>
   </div>
 </div>
@@ -436,6 +436,7 @@ const App = (() => {
     cur.textContent=i+1;
     notesText.textContent=slides[i].dataset.notes||'（本页无备注）';
     location.hash=i+1;
+    if(overview)slides[i].scrollIntoView({block:'nearest'});
   }
   const next=()=>show(i+1), prev=()=>show(i-1);
 
@@ -460,17 +461,28 @@ const App = (() => {
     slides.forEach((s,k)=>s.onclick=overview?()=>{toggleOverview();show(k)}:null);
   }
 
-  /* 键盘 */
+  /* 键盘（左手全覆盖：A 上一页 / D 下一页 / V 总览 / Q 首页 / E 末页 / F 全屏 / S 备注 / T 主题 / C 配色） */
+  const COLS=4; /* 总览每行列数，与 CSS 一致 */
   document.addEventListener('keydown',e=>{
-    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();overview||next()}
-    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();overview||prev()}
-    else if(e.key==='Home')show(0);
-    else if(e.key==='End')show(slides.length-1);
-    else if(e.key.toLowerCase()==='f')toggleFs();
-    else if(e.key.toLowerCase()==='o')toggleOverview();
-    else if(e.key.toLowerCase()==='s')toggleNotes();
-    else if(e.key.toLowerCase()==='t')cycleTheme();
-    else if(e.key.toLowerCase()==='c')cycleAccent();
+    const k=e.key.toLowerCase();
+    if(overview){ /* 总览内：移动高亮 + 确认进入，纯键盘可达 */
+      if(['arrowright','d'].includes(k)){e.preventDefault();show(i+1)}
+      else if(['arrowleft','a'].includes(k)){e.preventDefault();show(i-1)}
+      else if(k==='arrowdown'||k==='s'){e.preventDefault();show(i+COLS)}
+      else if(k==='arrowup'||k==='w'){e.preventDefault();show(i-COLS)}
+      else if(k==='enter'||k===' ')  {e.preventDefault();toggleOverview()} /* 确认，停在当前页 */
+      else if(k==='o'||k==='v'||k==='escape'){e.preventDefault();toggleOverview()} /* 退出 */
+      return;
+    }
+    if(['arrowright','arrowdown','pagedown',' ','d'].includes(k)){e.preventDefault();next()}
+    else if(['arrowleft','arrowup','pageup','a'].includes(k)){e.preventDefault();prev()}
+    else if(k==='home'||k==='q')show(0);
+    else if(k==='end'||k==='e')show(slides.length-1);
+    else if(k==='f')toggleFs();
+    else if(k==='o'||k==='v')toggleOverview();
+    else if(k==='s')toggleNotes();
+    else if(k==='t')cycleTheme();
+    else if(k==='c')cycleAccent();
   });
   /* 双击翻页（右半下一页 / 左半上一页），忽略控件；单击不触发，避免误触 */
   document.getElementById('deck').addEventListener('dblclick',e=>{

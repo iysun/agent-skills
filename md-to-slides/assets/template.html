@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="midnight" data-accent="blue">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{DECK_TITLE}}</title>
+<style>
+  /* =========================================================
+     主题系统：data-theme 控制明暗底色，data-accent 控制主题色
+     二者组合生效。运行时可用顶部控制面板 / 快捷键 T、C 切换。
+     ========================================================= */
+  :root{
+    --radius:18px;
+    --maxw:1180px;
+    --font:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Segoe UI",system-ui,-apple-system,sans-serif;
+    --mono:"JetBrains Mono","Cascadia Code","SFMono-Regular",Consolas,monospace;
+    --speed:.45s;
+  }
+
+  /* ---------- 明暗主题 ---------- */
+  [data-theme="midnight"]{
+    --bg:#0a0e17; --bg-glow:#16223c; --card:#141d30; --card2:#0f1626;
+    --line:#1f2c45; --text:#e8edf6; --muted:#93a1bd; --code-bg:#0c1322;
+  }
+  [data-theme="slate"]{
+    --bg:#11151c; --bg-glow:#1c2430; --card:#1a212c; --card2:#161c25;
+    --line:#2a333f; --text:#eef1f5; --muted:#9aa7b6; --code-bg:#10151c;
+  }
+  [data-theme="paper"]{ /* 浅色 */
+    --bg:#f6f7fb; --bg-glow:#e9eefb; --card:#ffffff; --card2:#f1f3f9;
+    --line:#e2e6ef; --text:#1a2030; --muted:#5c6678; --code-bg:#f1f3f9;
+  }
+  [data-theme="dawn"]{ /* 暖浅色 */
+    --bg:#fbf7f2; --bg-glow:#f6e9dc; --card:#ffffff; --card2:#f7f1ea;
+    --line:#ece1d4; --text:#2a2118; --muted:#7a6b58; --code-bg:#f5efe7;
+  }
+  [data-theme="forest"]{
+    --bg:#0b1310; --bg-glow:#13241c; --card:#11201a; --card2:#0d1813;
+    --line:#1d3329; --text:#e9f3ec; --muted:#8fb5a0; --code-bg:#0b1813;
+  }
+
+  /* ---------- 主题色（强调色）---------- */
+  [data-accent="blue"]  { --accent:#5b8cff; --accent2:#36d6a0; --accent3:#ffd479; }
+  [data-accent="orange"]{ --accent:#ff8a4c; --accent2:#ffd166; --accent3:#5ac8fa; }
+  [data-accent="green"] { --accent:#3dd68c; --accent2:#7ee787; --accent3:#5ac8fa; }
+  [data-accent="purple"]{ --accent:#b48cff; --accent2:#ff8ad8; --accent3:#7aa2ff; }
+  [data-accent="pink"]  { --accent:#ff6fae; --accent2:#ffb454; --accent3:#7aa2ff; }
+  [data-accent="cyan"]  { --accent:#22d3ee; --accent2:#6ee7b7; --accent3:#a78bfa; }
+  [data-accent="red"]   { --accent:#ff6b6b; --accent2:#ffa94d; --accent3:#74c0fc; }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:var(--font);
+    background:radial-gradient(1200px 800px at 75% -10%, var(--bg-glow) 0%, var(--bg) 55%) fixed;
+    color:var(--text); overflow:hidden; -webkit-font-smoothing:antialiased;
+    transition:background .4s ease,color .4s ease;
+  }
+
+  /* ---------- 进度条 ---------- */
+  .progress{position:fixed;top:0;left:0;height:4px;width:0;z-index:50;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    box-shadow:0 0 14px var(--accent);transition:width .35s ease}
+
+  /* ---------- 幻灯片容器 ---------- */
+  .deck{position:relative;width:100vw;height:100vh}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;
+    justify-content:center;padding:7vh 9vw 10vh;opacity:0;
+    transform:translateY(26px) scale(.99);
+    transition:opacity var(--speed) ease,transform var(--speed) ease}
+  .slide.active{display:flex;opacity:1;transform:none}
+  .slide.center{align-items:center;text-align:center}
+  .inner{width:100%;max-width:var(--maxw);margin:0 auto}
+
+  /* ---------- 排版基础 ---------- */
+  .kicker{display:inline-flex;align-items:center;gap:10px;font-size:1.05rem;
+    letter-spacing:.12em;color:var(--accent2);text-transform:uppercase;
+    margin-bottom:1.4rem;font-weight:700}
+  .kicker::before{content:"";width:34px;height:3px;border-radius:3px;
+    background:linear-gradient(90deg,var(--accent2),transparent)}
+  h1{font-size:clamp(2.6rem,6vw,5rem);line-height:1.08;font-weight:800;letter-spacing:-.01em}
+  h2{font-size:clamp(2rem,4.4vw,3.4rem);line-height:1.16;font-weight:800;margin-bottom:1.8rem}
+  h3{font-size:clamp(1.2rem,2vw,1.6rem);font-weight:700}
+  .grad{background:linear-gradient(100deg,var(--accent),var(--accent2) 60%,var(--accent3));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:clamp(1.15rem,2vw,1.6rem);color:var(--muted);margin-top:1.4rem;max-width:62ch;line-height:1.6}
+  .hl{color:var(--accent);font-weight:700}
+  .hl2{color:var(--accent2);font-weight:700}
+  .strike{text-decoration:line-through;color:var(--muted)}
+  b,strong{color:var(--text)}
+
+  /* ---------- 组件：bullets ---------- */
+  ul.points{list-style:none;display:flex;flex-direction:column;gap:1rem;max-width:74ch;margin-top:.4rem}
+  ul.points li{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:1.05rem 1.3rem;font-size:clamp(1.05rem,1.8vw,1.45rem);line-height:1.5;
+    display:flex;gap:1rem;align-items:flex-start}
+  ul.points li .ic{flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:grid;
+    place-items:center;font-weight:800;font-size:1rem;color:var(--accent);
+    background:color-mix(in srgb,var(--accent) 16%,transparent);
+    border:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}
+  ul.points li small{display:block;color:var(--muted);font-size:.82em;margin-top:.4rem;font-weight:400}
+
+  /* ---------- 组件：cards 网格 ---------- */
+  .grid{display:grid;gap:1.3rem}
+  .grid.g2{grid-template-columns:1fr 1fr}
+  .grid.g3{grid-template-columns:repeat(3,1fr)}
+  .grid.g4{grid-template-columns:repeat(2,1fr)} /* 2x2 */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:1.5rem 1.6rem;position:relative;overflow:hidden}
+  .card .num{font-size:2.2rem;font-weight:800;color:var(--accent);opacity:.4;line-height:1}
+  .card h3{margin:.4rem 0 .6rem}
+  .card p{color:var(--muted);font-size:1.02rem;line-height:1.55}
+  .card .tag{position:absolute;top:1.1rem;right:1.2rem;font-size:.8rem;color:var(--accent2);
+    border:1px solid var(--line);padding:.2rem .6rem;border-radius:999px}
+
+  /* ---------- 组件：split 左右 ---------- */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:2.4rem;align-items:center}
+  .split.wide-left{grid-template-columns:1.4fr 1fr}
+  .split.wide-right{grid-template-columns:1fr 1.4fr}
+  .split .pane{min-width:0}
+
+  /* ---------- 组件：compare 对比 ---------- */
+  .compare{display:grid;grid-template-columns:1fr auto 1fr;gap:1.4rem;align-items:stretch}
+  .compare .col{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1.6rem}
+  .compare .col.good{border-color:color-mix(in srgb,var(--accent2) 40%,transparent)}
+  .compare .col.bad{border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+  .compare .col h3{margin-bottom:1rem}
+  .compare .mid{display:grid;place-items:center;font-weight:800;color:var(--muted);font-size:1.6rem}
+  .compare ul{list-style:none;display:flex;flex-direction:column;gap:.7rem}
+  .compare li{color:var(--muted);font-size:1.05rem;line-height:1.5;padding-left:1.4rem;position:relative}
+  .compare li::before{content:"→";position:absolute;left:0;color:var(--accent)}
+
+  /* ---------- 组件：quote / statement ---------- */
+  .quote{border-left:4px solid var(--accent);padding:.4rem 0 .4rem 1.6rem;
+    font-size:clamp(1.3rem,2.6vw,2.1rem);line-height:1.45}
+  .quote .by{display:block;color:var(--muted);font-size:1rem;margin-top:1rem;font-weight:400}
+  .statement{font-size:clamp(1.9rem,4.6vw,3.4rem);line-height:1.28;font-weight:800;max-width:20ch;margin:0 auto}
+
+  /* ---------- 组件：section 分隔页 ---------- */
+  .section .num{font-size:clamp(4rem,13vw,9rem);font-weight:900;color:var(--line);line-height:1}
+  .section h2{margin-top:-.4rem}
+
+  /* ---------- 组件：steps 步骤/时间线 ---------- */
+  .steps{display:flex;flex-direction:column;gap:1rem;counter-reset:s}
+  .steps .step{display:flex;gap:1.2rem;align-items:flex-start;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.3rem}
+  .steps .step::before{counter-increment:s;content:counter(s);flex:0 0 auto;width:40px;height:40px;
+    border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .steps .step .t{font-size:clamp(1.05rem,1.7vw,1.4rem);line-height:1.45}
+  .steps .step .t small{display:block;color:var(--muted);font-size:.82em;margin-top:.3rem}
+
+  /* ---------- 组件：code ---------- */
+  pre.code{background:var(--code-bg);border:1px solid var(--line);border-radius:14px;
+    padding:1.4rem 1.6rem;overflow:auto;font-family:var(--mono);
+    font-size:clamp(.95rem,1.4vw,1.2rem);line-height:1.6;max-height:70vh}
+  pre.code .c{color:var(--muted)}      /* 注释 */
+  pre.code .k{color:var(--accent)}     /* 关键字 */
+  pre.code .s{color:var(--accent2)}    /* 字符串 */
+
+  /* ---------- 组件：image ---------- */
+  .figure{display:flex;flex-direction:column;align-items:center;gap:1rem}
+  .figure img{max-width:100%;max-height:70vh;border-radius:14px;border:1px solid var(--line)}
+  .figure figcaption{color:var(--muted);font-size:1rem}
+
+  /* ---------- 组件：callout / pill ---------- */
+  .callout{margin-top:1.6rem;border:1px dashed var(--line);border-radius:14px;
+    padding:1.1rem 1.4rem;background:color-mix(in srgb,var(--accent2) 6%,transparent);
+    font-size:clamp(1.05rem,1.7vw,1.35rem)}
+  .callout b{color:var(--accent2)}
+  .pill{display:inline-block;padding:.3rem .8rem;border-radius:999px;font-size:.95rem;
+    border:1px solid var(--line);color:var(--muted);margin:.3rem .4rem 0 0}
+  .pill.on{color:var(--accent2);background:color-mix(in srgb,var(--accent2) 10%,transparent);
+    border-color:color-mix(in srgb,var(--accent2) 40%,transparent)}
+
+  /* ---------- 顶部控制 + 状态栏 ---------- */
+  .topctl{position:fixed;top:14px;right:16px;z-index:60;display:flex;gap:8px;align-items:center}
+  .topctl button{background:var(--card);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:.4rem .7rem;font:inherit;font-size:.85rem;cursor:pointer}
+  .topctl button:hover{border-color:var(--accent)}
+  .panel{position:fixed;top:56px;right:16px;z-index:60;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem;width:230px;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);display:none}
+  .panel.show{display:block}
+  .panel .row{margin-bottom:.9rem}
+  .panel .row:last-child{margin-bottom:0}
+  .panel .lbl{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+  .panel .opts{display:flex;flex-wrap:wrap;gap:.4rem}
+  .panel .opts button{padding:.3rem .6rem;font-size:.82rem}
+  .panel .opts button.sel{border-color:var(--accent);color:var(--accent)}
+  .swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+  .swatch.sel{border-color:var(--text)}
+
+  .bar{position:fixed;bottom:0;left:0;right:0;height:50px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 22px;background:color-mix(in srgb,var(--bg) 70%,transparent);
+    backdrop-filter:blur(8px);border-top:1px solid var(--line);z-index:40;font-size:.88rem;color:var(--muted)}
+  .bar .title{font-weight:700;color:var(--text)}
+  .bar .right{display:flex;gap:16px;align-items:center}
+  .bar kbd{background:var(--card);border:1px solid var(--line);border-bottom-width:2px;
+    border-radius:6px;padding:1px 7px;font-family:inherit;font-size:.78rem;color:var(--text)}
+  .counter{font-variant-numeric:tabular-nums}
+
+  /* ---------- 演讲备注 ---------- */
+  .notes{position:fixed;left:0;right:0;bottom:50px;z-index:45;background:var(--card2);
+    border-top:2px solid var(--accent);padding:1.1rem 22px 1.3rem;transform:translateY(calc(100% + 60px));
+    transition:transform .35s ease;max-height:42vh;overflow-y:auto}
+  .notes.show{transform:none}
+  .notes .label{font-size:.78rem;letter-spacing:.15em;color:var(--accent2);text-transform:uppercase;margin-bottom:.5rem;font-weight:700}
+  .notes p{font-size:1.05rem;line-height:1.7;max-width:90ch}
+
+  /* ---------- 总览模式 ---------- */
+  body.overview .deck{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+    padding:64px 18px 60px;overflow:auto;height:100vh}
+  body.overview .slide{position:relative!important;inset:auto!important;display:flex!important;
+    opacity:1!important;transform:scale(1)!important;height:21vh;border:1px solid var(--line);
+    border-radius:10px;padding:12px!important;overflow:hidden;cursor:pointer;justify-content:flex-start}
+  body.overview .slide.active{outline:2px solid var(--accent)}
+  body.overview .slide *{font-size:.7rem!important;line-height:1.25!important}
+  body.overview .bar,body.overview .notes,body.overview .progress{display:none}
+
+  /* ---------- 打印 / 导出 PDF（每页一张幻灯片）---------- */
+  @media print{
+    @page{size:1280px 720px;margin:0}
+    body{overflow:visible;background:var(--bg)}
+    .topctl,.panel,.bar,.notes,.progress,.hint{display:none!important}
+    .deck{position:static;width:auto;height:auto}
+    .slide{position:relative!important;inset:auto!important;display:flex!important;opacity:1!important;
+      transform:none!important;width:1280px;height:720px;page-break-after:always;break-after:page}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="bar"></div>
+
+<!-- 顶部控制 -->
+<div class="topctl">
+  <button id="themeBtn" title="主题与配色 (T 切主题 / C 切配色)">🎨 主题</button>
+  <button onclick="App.toggleOverview()" title="总览 (O)">▦</button>
+  <button onclick="App.toggleFs()" title="全屏 (F)">⛶</button>
+</div>
+
+<div class="panel" id="panel">
+  <div class="row">
+    <div class="lbl">主题</div>
+    <div class="opts" id="themeOpts"></div>
+  </div>
+  <div class="row">
+    <div class="lbl">主题色</div>
+    <div class="opts" id="accentOpts"></div>
+  </div>
+  <div class="row" style="font-size:.78rem;color:var(--muted)">
+    快捷键：<kbd>T</kbd> 主题 · <kbd>C</kbd> 配色 · <kbd>S</kbd> 备注
+  </div>
+</div>
+
+<!-- =========================================================
+     幻灯片从这里开始。下面 13 张演示了全部布局，
+     生成正式演示稿时替换 .slide 内容即可（结构与 class 保持不变）。
+     每张 .slide 可加 data-notes="演讲备注…"，按 S 显示。
+     ========================================================= -->
+<main class="deck" id="deck">
+
+  <!-- 1. 封面 cover -->
+  <section class="slide center" data-notes="开场白：一句话点题，建立悬念。">
+    <div class="inner">
+      <span class="kicker">{{KICKER}}</span>
+      <h1>{{TITLE_LINE_1}}<br/><span class="grad">{{TITLE_LINE_2}}</span></h1>
+      <p class="lead">{{SUBTITLE}}</p>
+    </div>
+  </section>
+
+  <!-- 2. 分隔页 section -->
+  <section class="slide section">
+    <div class="inner">
+      <div class="num">01</div>
+      <h2>第一部分 · <span class="hl">小节标题</span></h2>
+      <p class="lead">一句话说明本节要讲什么。</p>
+    </div>
+  </section>
+
+  <!-- 3. 要点列表 bullets -->
+  <section class="slide">
+    <div class="inner">
+      <h2>要点列表</h2>
+      <ul class="points">
+        <li><span class="ic">1</span><span>第一条要点<small>补充说明，浅色小字</small></span></li>
+        <li><span class="ic">2</span><span>第二条要点</span></li>
+        <li><span class="ic">3</span><span>第三条要点</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4. 左右分栏 split -->
+  <section class="slide">
+    <div class="inner">
+      <h2>左右分栏</h2>
+      <div class="split">
+        <div class="pane">
+          <h3 class="hl">左侧</h3>
+          <p class="lead" style="margin-top:.8rem">放观点、说明文字或一段引用。</p>
+        </div>
+        <div class="pane">
+          <div class="card"><h3>右侧</h3><p>放对照内容、卡片、代码或图片。</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 2x2 网格 grid g4 -->
+  <section class="slide">
+    <div class="inner">
+      <h2>2×2 卡片</h2>
+      <div class="grid g4">
+        <div class="card"><div class="num">01</div><h3>卡片一</h3><p>说明文字。</p></div>
+        <div class="card"><div class="num">02</div><h3>卡片二</h3><p>说明文字。</p></div>
+        <div class="card"><div class="num">03</div><h3>卡片三</h3><p>说明文字。</p></div>
+        <div class="card"><div class="num">04</div><h3>卡片四</h3><p>说明文字。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 三栏网格 grid g3 -->
+  <section class="slide">
+    <div class="inner">
+      <h2>三栏卡片</h2>
+      <div class="grid g3">
+        <div class="card"><span class="tag">标签</span><h3>🧩 标题</h3><p>说明文字。</p></div>
+        <div class="card"><span class="tag">标签</span><h3>🔌 标题</h3><p>说明文字。</p></div>
+        <div class="card"><span class="tag">标签</span><h3>📐 标题</h3><p>说明文字。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. 对比 compare -->
+  <section class="slide">
+    <div class="inner">
+      <h2>A vs B 对比</h2>
+      <div class="compare">
+        <div class="col bad"><h3 class="hl">方案 A</h3><ul><li>特点一</li><li>特点二</li></ul></div>
+        <div class="mid">VS</div>
+        <div class="col good"><h3 class="hl2">方案 B</h3><ul><li>特点一</li><li>特点二</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. 引用 quote -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">引用</span>
+      <div class="quote">把一句最有力的话放大呈现，制造记忆点。
+        <span class="by">—— 出处 / 说话人</span></div>
+    </div>
+  </section>
+
+  <!-- 9. 金句 statement -->
+  <section class="slide center">
+    <div class="inner">
+      <p class="statement">一句话<span class="grad">大字主张</span>，居中、占满视觉。</p>
+    </div>
+  </section>
+
+  <!-- 10. 步骤 steps -->
+  <section class="slide">
+    <div class="inner">
+      <h2>步骤 / 时间线</h2>
+      <div class="steps">
+        <div class="step"><div class="t">第一步<small>说明</small></div></div>
+        <div class="step"><div class="t">第二步</div></div>
+        <div class="step"><div class="t">第三步</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. 代码 code -->
+  <section class="slide">
+    <div class="inner">
+      <h2>代码展示</h2>
+<pre class="code"><span class="c"># 用 span.k / span.s / span.c 手动着色</span>
+<span class="k">function</span> hello(name) {
+  <span class="k">return</span> <span class="s">`Hello, ${name}`</span>
+}</pre>
+    </div>
+  </section>
+
+  <!-- 12. 图片 figure -->
+  <section class="slide center">
+    <div class="inner">
+      <figure class="figure">
+        <img src="https://placehold.co/900x500/141d30/93a1bd?text=Your+Image" alt="示意图" />
+        <figcaption>图注：替换 src 为你的截图或图表</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 13. 结尾 end -->
+  <section class="slide center" data-notes="收尾：重复核心主张 + 行动号召。">
+    <div class="inner">
+      <h1>结尾金句<br/><span class="grad">行动号召</span></h1>
+      <p class="lead" style="margin-left:auto;margin-right:auto">感谢观看 · 关注 / 点赞 / 评论区聊聊</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- 状态栏 -->
+<div class="bar">
+  <span class="title">{{DECK_TITLE}}</span>
+  <div class="right">
+    <span>← → 翻页 · <kbd>F</kbd> 全屏 · <kbd>O</kbd> 总览 · <kbd>S</kbd> 备注</span>
+    <span class="counter"><span id="cur">1</span> / <span id="total">1</span></span>
+  </div>
+</div>
+
+<!-- 演讲备注 -->
+<div class="notes" id="notes"><div class="label">演讲备注</div><p id="notesText"></p></div>
+
+<script>
+const App = (() => {
+  const slides=[...document.querySelectorAll('.slide')];
+  const bar=document.getElementById('bar');
+  const cur=document.getElementById('cur');
+  const notes=document.getElementById('notes');
+  const notesText=document.getElementById('notesText');
+  const THEMES=['midnight','slate','forest','paper','dawn'];
+  const ACCENTS=['blue','orange','green','purple','pink','cyan','red'];
+  const SWATCH={blue:'#5b8cff',orange:'#ff8a4c',green:'#3dd68c',purple:'#b48cff',pink:'#ff6fae',cyan:'#22d3ee',red:'#ff6b6b'};
+  let i=0, notesOn=false, overview=false;
+
+  document.getElementById('total').textContent=slides.length;
+
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    bar.style.width=((i+1)/slides.length*100)+'%';
+    cur.textContent=i+1;
+    notesText.textContent=slides[i].dataset.notes||'（本页无备注）';
+    location.hash=i+1;
+  }
+  const next=()=>show(i+1), prev=()=>show(i-1);
+
+  /* 主题 / 配色 */
+  function setTheme(t){document.documentElement.dataset.theme=t;localStorage.deckTheme=t;renderPanel()}
+  function setAccent(a){document.documentElement.dataset.accent=a;localStorage.deckAccent=a;renderPanel()}
+  function cycleTheme(){const t=document.documentElement.dataset.theme;setTheme(THEMES[(THEMES.indexOf(t)+1)%THEMES.length])}
+  function cycleAccent(){const a=document.documentElement.dataset.accent;setAccent(ACCENTS[(ACCENTS.indexOf(a)+1)%ACCENTS.length])}
+
+  function renderPanel(){
+    const t=document.documentElement.dataset.theme, a=document.documentElement.dataset.accent;
+    document.getElementById('themeOpts').innerHTML=THEMES.map(x=>
+      `<button class="${x===t?'sel':''}" onclick="App.setTheme('${x}')">${x}</button>`).join('');
+    document.getElementById('accentOpts').innerHTML=ACCENTS.map(x=>
+      `<button class="swatch ${x===a?'sel':''}" style="background:${SWATCH[x]}" onclick="App.setAccent('${x}')"></button>`).join('');
+  }
+
+  function toggleNotes(){notesOn=!notesOn;notes.classList.toggle('show',notesOn)}
+  function toggleFs(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+  function toggleOverview(){
+    overview=!overview;document.body.classList.toggle('overview',overview);
+    slides.forEach((s,k)=>s.onclick=overview?()=>{toggleOverview();show(k)}:null);
+  }
+
+  /* 键盘 */
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();overview||next()}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();overview||prev()}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+    else if(e.key.toLowerCase()==='f')toggleFs();
+    else if(e.key.toLowerCase()==='o')toggleOverview();
+    else if(e.key.toLowerCase()==='s')toggleNotes();
+    else if(e.key.toLowerCase()==='t')cycleTheme();
+    else if(e.key.toLowerCase()==='c')cycleAccent();
+  });
+  /* 双击翻页（右半下一页 / 左半上一页），忽略控件；单击不触发，避免误触 */
+  document.getElementById('deck').addEventListener('dblclick',e=>{
+    if(overview||e.target.closest('a,button,.topctl,.panel'))return;
+    (e.clientX>window.innerWidth/2)?next():prev();
+  });
+  document.getElementById('themeBtn').addEventListener('click',()=>document.getElementById('panel').classList.toggle('show'));
+
+  /* 初始化：恢复偏好 + 跳到 hash 指定页 */
+  setTheme(localStorage.deckTheme||document.documentElement.dataset.theme);
+  setAccent(localStorage.deckAccent||document.documentElement.dataset.accent);
+  show((parseInt(location.hash.slice(1))||1)-1);
+
+  return {show,next,prev,setTheme,setAccent,toggleFs,toggleOverview,toggleNotes};
+})();
+</script>
+</body>
+</html>

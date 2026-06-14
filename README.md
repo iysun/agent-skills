@@ -48,6 +48,7 @@ node scripts/link-skills.mjs --agents cursor,codex,claude --force
 | Skill | 说明 |
 |-------|------|
 | [git-repo-contribute-guide](./git-repo-contribute-guide/) | 解析 Git 仓库 URL，生成「如何贡献」指南 |
+| [md-to-slides](./md-to-slides/) | 把 Markdown 大纲/文档转成单文件演示 HTML（多布局 + 主题切换 + 放映/PDF） |
 
 ## 新增 Skill
 

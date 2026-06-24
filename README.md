@@ -49,6 +49,7 @@ node scripts/link-skills.mjs --agents cursor,codex,claude --force
 |-------|------|
 | [git-repo-contribute-guide](./git-repo-contribute-guide/) | 解析 Git 仓库 URL，生成「如何贡献」指南 |
 | [md-to-slides](./md-to-slides/) | 把 Markdown 大纲/文档转成单文件演示 HTML（多布局 + 主题切换 + 放映/PDF） |
+| [bootstrap-agent-config](./bootstrap-agent-config/) | 为项目生成跨 Claude Code/Codex/Cursor 的 AI 配置（AGENTS.md + 各家适配 + 构建/运行循环） |
 
 ## 新增 Skill
 

@@ -61,7 +61,7 @@ description: >-
 |------|------------|
 | 用 hooks 吗？ | **默认否**（推荐）；要强制才加 |
 | 要哪些 loop？ | 构建-修复 / 运行-验证 / 组件开发（按项目可多选） |
-| docs 改成 references 结构？ | 有较多文档时推荐；轻量项目可跳过 |
+| docs 目录结构？ | **必问，不得跳过**，三选一（见阶段 7） |
 | 构建依赖机器相关路径？ | 是 → 生成 `settings.local.json` 环境注入并 gitignore |
 | 适配哪些 agent？ | 默认三家全做 |
 
@@ -85,13 +85,66 @@ description: >-
 - 主要靠 **`AGENTS.md`**（Codex 原生读，root→cwd 级联）。
 - 可选：把组件开发类 skill 镜像到项目 `.codex/skills/`；提示 `~/.codex/config.toml` 可配 `project_doc_fallback_filenames` / `project_doc_max_bytes`。
 
-### 阶段 7 — docs references 改造（若选）
+### 阶段 7 — docs 目录生成（必做，三选一）
 
-把单体文档拆成「索引 + 按需读取的细粒度文件」（渐进式上下文）：
+阶段 2 已由用户选定结构，此处按选项执行。
 
-- `docs/notes.md` / `docs/features.md` 退化为**索引**：每条一行 `- [标题](notes/slug.md) — 一行描述`（描述是 agent 判断"要不要读"的路由信号）。
-- 正文按条拆到 `docs/notes/*.md`、`docs/features/*.md`（英文 kebab-case 文件名，内容可中文）。
-- 维护纪律：新增 = 加一篇 + 补一行索引。
+---
+
+#### 选项 A — 渐进式索引结构（推荐）
+
+把项目现有文档内容拆成「索引 + 细粒度文件」，让 agent 按需读取而非一次性拉入全部上下文。
+
+**第一步：确定内容来源。** 扫描根目录与已有 docs/ 下的所有文档文件（`design.md`、`README.md`、`docs/*.md` 等），按主题分拣：
+
+| 内容类型 | 放入子目录 |
+|---------|-----------|
+| 设计意图、功能列表、架构决策、待办事项 | `docs/notes/` |
+| 对外 / 对内 API 规范、请求格式、鉴权规则 | `docs/api/` |
+| 功能描述、用户故事、产品需求 | `docs/features/` |
+
+> README.md 通常同时包含"安装运行"（已归入 AGENTS.md）和"API 规范"（拆入 `docs/api/`）两部分，**不要整体移动，只提取专题内容**，原文件保持不动供人类阅读。
+
+**第二步：创建细粒度文件。** 每个独立主题一个文件：
+- 文件名用英文 kebab-case（`user-id-migration.md`、`signing-rules.md`）
+- 内容语言与原文一致（中文原文保持中文）
+- 不要把多个不相关主题塞进同一文件
+
+**第三步：创建索引文件 `docs/notes.md`。** 格式：
+
+```markdown
+# docs/notes.md — 索引
+
+每条一行，描述是 agent 判断"要不要读"的路由信号。新增笔记 = 新建一篇 + 补一行索引。
+
+## 分类标题
+
+- [主题标题](notes/slug.md) — 一句话描述（写清"包含什么"而非"是什么"）
+```
+
+如有 api/、features/ 子目录，在同一索引里分节列出，或各自建 `docs/api.md`、`docs/features.md` 索引。
+
+**第四步：在 AGENTS.md 里加入文档索引入口：**
+
+```markdown
+## 文档索引
+
+详细设计与 API 规范见 [docs/notes.md](docs/notes.md)（渐进式索引，按需读取细粒度文件）。
+```
+
+**维护纪律：** 新增笔记 = 在对应子目录建新文件 + 在索引补一行。不要把内容直接写进索引文件。
+
+---
+
+#### 选项 B — 空目录占位
+
+仅创建 `docs/.gitkeep`，向用户说明维护规范（同选项 A 的文件命名与索引约定），内容留用户自行填充。
+
+---
+
+#### 选项 C — 移入现有文件
+
+把根目录散落的文档文件（`design.md` 等）原样移动到 `docs/`，更新 AGENTS.md 中对应引用路径。README.md 不移动（保持根目录惯例）。
 
 ### 阶段 8 — 收尾
 
